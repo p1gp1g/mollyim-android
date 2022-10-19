@@ -33,6 +33,12 @@ repositories {
             includeModule 'im.molly', 'native-utils'
         }
     }
+    maven {
+        url "https://www.jitpack.io"
+        content {
+            includeModule 'com.github.UnifiedPush', 'android-connector'
+        }
+    }
 
     google()
     mavenCentral()
@@ -133,6 +139,10 @@ android {
 
         androidTest {
             java.srcDirs += "$projectDir/src/testShared"
+        }
+
+        main {
+            java.srcDirs += "$projectDir/src/unifiedpush/java"
         }
     }
 
@@ -409,6 +419,8 @@ dependencies {
     implementation libs.androidx.biometric
     implementation libs.androidx.sharetarget
     implementation libs.androidx.webkit
+
+    implementation 'com.github.UnifiedPush:android-connector:2.1.1'
 
     nonFreeImplementation (libs.firebase.messaging) {
         exclude group: 'com.google.firebase', module: 'firebase-core'
