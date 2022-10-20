@@ -44,6 +44,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import im.molly.unifiedpush.helper.UnifiedPushHelper;
+
 /**
  * The application-level manager of our websocket connection.
  * <p>
@@ -163,11 +165,13 @@ public class IncomingMessageObserver {
 
     boolean registered     = SignalStore.account().isRegistered();
     boolean fcmEnabled     = SignalStore.account().isFcmEnabled();
+    boolean pushEnabled    = UnifiedPushHelper.isPushEnabled();
     boolean hasNetwork     = NetworkConstraint.isMet(context);
     boolean hasProxy       = ApplicationDependencies.getNetworkManager().isProxyEnabled();
     boolean forceWebsocket = SignalStore.internalValues().isWebsocketModeForced();
     long    oldRequest     = System.currentTimeMillis() - OLD_REQUEST_WINDOW_MS;
 
+    // Even if unifiedpush is enabled, we start in foreground so this observer is not killed
     if ((!fcmEnabled || forceWebsocket) && registered && !isForegroundService) {
       ContextCompat.startForegroundService(context, new Intent(context, ForegroundService.class));
       isForegroundService = true;
@@ -178,11 +182,12 @@ public class IncomingMessageObserver {
       Log.d(TAG, "Removed old keep web socket open requests.");
     }
 
-    Log.d(TAG, String.format("Network: %s, Foreground: %s, FCM: %s, Stay open requests: [%s], Censored: %s, Registered: %s, Proxy: %s, Force websocket: %s",
-                             hasNetwork, appVisible, fcmEnabled, Util.join(keepAliveTokens.entrySet(), ","), networkAccess.isCensored(), registered, hasProxy, forceWebsocket));
+    Log.d(TAG, String.format("Network: %s, Foreground: %s, FCM: %s, push: %s, Stay open requests: [%s], Censored: %s, Registered: %s, Proxy: %s, Force websocket: %s",
+                             hasNetwork, appVisible, fcmEnabled, pushEnabled, Util.join(keepAliveTokens.entrySet(), ","), networkAccess.isCensored(), registered, hasProxy, forceWebsocket));
 
+    // If unifiedpush is enabled, the connection is not needed
     return registered &&
-           (appVisible || !fcmEnabled || forceWebsocket || Util.hasItems(keepAliveTokens)) &&
+           (appVisible || !pushEnabled || forceWebsocket || Util.hasItems(keepAliveTokens)) &&
            hasNetwork &&
            !networkAccess.isCensored();
   }
