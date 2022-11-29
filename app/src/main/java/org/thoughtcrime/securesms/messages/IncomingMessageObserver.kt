@@ -181,13 +181,14 @@ class IncomingMessageObserver(private val context: Application) {
 
     val registered = SignalStore.account().isRegistered
     val fcmEnabled = SignalStore.account().fcmEnabled
+    val pushRequireForeground = UnifiedPushHelper.pushRequireForeground()
     val pushAvailable = UnifiedPushHelper.isPushAvailable()
     val hasNetwork = NetworkConstraint.isMet(context)
     val hasProxy = ApplicationDependencies.getNetworkManager().isProxyEnabled
     val forceWebsocket = SignalStore.internalValues().isWebsocketModeForced
 
-    // MOLLY: Change fcmEnabled to pushAvailable
-    if (!pushAvailable || forceWebsocket) {
+    // MOLLY: Change fcmEnabled to pushRequireForeground
+    if (!pushRequireForeground || forceWebsocket) {
       // MOLLY: Try to start the foreground service only once
       if (foregroundServiceStartPending.getAndSet(false)) {
         try {
