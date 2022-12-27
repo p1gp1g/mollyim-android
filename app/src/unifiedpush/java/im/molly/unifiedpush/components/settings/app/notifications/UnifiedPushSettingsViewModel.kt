@@ -147,15 +147,7 @@ class UnifiedPushSettingsViewModel(private val application: Application) : ViewM
   private fun restartServiceIfNeeded() {
     /*
     // Ignore, not use after the rebase
-    if (
-      (UnifiedPushHelper.pushRequireForeground() && !ApplicationDependencies.getIncomingMessageObserver().isForegroundService) ||
-      (!UnifiedPushHelper.pushRequireForeground() && ApplicationDependencies.getIncomingMessageObserver().isForegroundService)
-    ) {
-      ApplicationDependencies.getIncomingMessageObserver().stopForegroundService()
-      ApplicationDependencies.closeConnections()
-      ApplicationDependencies.getIncomingMessageObserver()
-    }
-    ApplicationContext().initializeFcmCheck()
+    ApplicationContext.getInstance().initializeFcmCheck()
     */
   }
 
