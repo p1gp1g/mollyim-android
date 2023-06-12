@@ -14,6 +14,7 @@ import org.thoughtcrime.securesms.push.AccountManagerFactory
 import org.thoughtcrime.securesms.registration.secondary.DeviceNameCipher
 import org.thoughtcrime.securesms.util.TextSecurePreferences
 import org.thoughtcrime.securesms.util.Util
+import org.whispersystems.signalservice.api.account.PreKeyUpload
 import org.whispersystems.signalservice.api.messages.multidevice.VerifyDeviceResponse
 import org.whispersystems.signalservice.api.push.ServiceIdType
 import org.whispersystems.signalservice.api.push.SignalServiceAddress
@@ -114,8 +115,17 @@ class MollySocketLinkedDevice(val context: Context) {
     )
     val metadataStore = SignalStore.account().aciPreKeys
     val signedPreKey = PreKeyUtil.generateAndStoreSignedPreKey(protocolStore, metadataStore)
-    val oneTimePreKeys = PreKeyUtil.generateAndStoreOneTimePreKeys(protocolStore, metadataStore)
-    accountManager.setPreKeys(ServiceIdType.ACI, protocolStore.identityKeyPair.publicKey, signedPreKey, oneTimePreKeys)
+    val oneTimePreKeys = PreKeyUtil.generateAndStoreOneTimeEcPreKeys(protocolStore, metadataStore)
+    accountManager.setPreKeys(
+      PreKeyUpload(
+        serviceIdType = ServiceIdType.ACI,
+        identityKey = protocolStore.identityKeyPair.publicKey,
+        signedPreKey = signedPreKey,
+        oneTimeEcPreKeys = oneTimePreKeys,
+        lastResortKyberPreKey = null,
+        oneTimeKyberPreKeys = null
+      )
+    )
     metadataStore.activeSignedPreKeyId = signedPreKey.id
     metadataStore.isSignedPreKeyRegistered = true
     return true
