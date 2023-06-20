@@ -2,6 +2,8 @@ package im.molly.unifiedpush.receiver
 
 import android.content.Context
 import android.os.Build
+import androidx.core.os.bundleOf
+import com.google.firebase.messaging.RemoteMessage
 import im.molly.unifiedpush.events.UnifiedPushRegistrationEvent
 import im.molly.unifiedpush.model.UnifiedPushStatus
 import im.molly.unifiedpush.model.saveStatus
@@ -12,6 +14,7 @@ import org.greenrobot.eventbus.EventBus
 import org.signal.core.util.concurrent.SignalExecutors
 import org.signal.core.util.logging.Log
 import org.thoughtcrime.securesms.gcm.FcmFetchManager
+import org.thoughtcrime.securesms.gcm.FcmReceiveService
 import org.thoughtcrime.securesms.keyvalue.SignalStore
 import org.thoughtcrime.securesms.util.FeatureFlags
 import org.thoughtcrime.securesms.util.concurrent.SerialMonoLifoExecutor
@@ -78,25 +81,7 @@ class UnifiedPushReceiver : MessagingReceiver() {
 
   private fun handleMessage(context: Context) {
     EXECUTOR.enqueue {
-      val timeSinceLastRefresh = System.currentTimeMillis() - SignalStore.misc().lastFcmForegroundServiceTime
-      val enqueueSuccessful = try {
-        if (FeatureFlags.useFcmForegroundService()) {
-          SignalStore.misc().lastFcmForegroundServiceTime = System.currentTimeMillis()
-          FcmFetchManager.enqueue(context, true)
-        } else if (Build.VERSION.SDK_INT >= 31 && timeSinceLastRefresh > FOREGROUND_INTERVAL) {
-          SignalStore.misc().lastFcmForegroundServiceTime = System.currentTimeMillis()
-          FcmFetchManager.enqueue(context, true)
-        } else {
-          FcmFetchManager.enqueue(context, false)
-        }
-      } catch (e: Exception) {
-        Log.w(TAG, "Failed to start service.", e)
-        false
-      }
-      if (!enqueueSuccessful) {
-        Log.w(TAG, "Unable to start service. Falling back to legacy approach.")
-        FcmFetchManager.retrieveMessages(context)
-      }
+      FcmReceiveService.handleReceivedNotification(context, RemoteMessage(bundleOf("google.delivered_priority" to "high")))
     }
   }
 }
